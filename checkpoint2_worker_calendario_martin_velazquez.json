@@ -1,0 +1,132 @@
+{
+  "name": "checkpoint2_worker_calendario_martin_velazquez",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "cliente"
+            },
+            {
+              "name": "horario_solicitado"
+            },
+            {
+              "name": "tipo_reunion"
+            },
+            {
+              "name": "duracion",
+              "type": "number"
+            },
+            {
+              "name": "ubicacion"
+            },
+            {
+              "name": "cliente_email"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d129a3c9-7ff2-4cf5-9b4d-ea530288b873",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "acf58f5dd1379c39022038a05ae795c8369b30544c47d42174e354de07512a7d@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "AI Automation"
+        },
+        "start": "={{ $json.horario_solicitado }}",
+        "end": "={{ $now.plus($json.duracion, 'hours') }}",
+        "additionalFields": {
+          "location": "={{ $json.ubicacion }}",
+          "summary": "={{ $json.tipo_reunion }} - {{ $json.cliente }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5c0dbf10-5e5d-4b5f-a36f-39de763416e6",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "hdhcL8DSsAfLY4VF",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.cliente_email }}",
+        "subject": "=Confirmación: {{ $json.tipo_reunion }} - {{ $json.cliente }}",
+        "message": "=Reunión confirmada.  Cliente: {{ $json.cliente }} Tipo: {{ $json.tipo_reunion }} Horario: {{ $json.horario_solicitado }} Duración: {{ $json.duracion }} horas Ubicación: {{ $json.ubicacion }}  Saludos, Coordinador de Agendas",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "9cf7e3bd-6f8b-4ad3-a04a-9b2109143772",
+      "name": "Send a message",
+      "webhookId": "af4108d0-23c2-498e-a5c0-6c6170a660c6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "46iVJidF3b1UJRwM",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5b55105c-ec91-4a53-9917-7cb5ef43c366",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4854dc7ade341adb13a29b5ac6e7fdf1b6bae4a2ff30a735c7a8d1e500a180b8"
+  },
+  "nodeGroups": [],
+  "id": "3nynWLNfx3p0ybZH",
+  "tags": []
+}
