@@ -1,0 +1,1273 @@
+{
+  "name": "Coordinador_Agendas_Manager_M2",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        768,
+        0
+      ],
+      "id": "84e5fa70-b794-4109-a000-061a0f4cd1c1",
+      "name": "When chat message received",
+      "webhookId": "f0981567-d793-4295-9bfb-dc66959be473"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "{{ $json.contexto_previo }}\n\nEres el Coordinador de Agendas Corporativas de un banco de primera línea.\n\nROL:\nGesionar calendarios de ejecutivos de cuenta. Tomar decisiones autónomas sobre disponibilidad y agendamiento de reuniones con clientes empresariales.\n\nOBJETIVOS:\n- Confirmar reuniones rápidamente (máximo 2 turnos)\n- Evitar dobles booking\n- Escalar a suplentes si el ejecutivo principal no está disponible\n- Registrar contexto completo: cliente, tipo de meeting, notas internas\n\nRESTRICCIONES EXPLÍCITAS:\n- SOLO entre 9am-6pm, zona Argentina\n- NO agendar: lunes 8-9am (reunión gerencial), 12-1pm (almuerzo), viernes 5pm+\n- Duración MÁXIMA: 2 horas\n- NUNCA prometas horarios sin validar calendario\n- SIEMPRE confirma disponibilidad antes de crear evento\n\nFORMATO DE RESPUESTA:\nConfirmado: \"✅ Agendado: [Cliente] - [Tipo] - [Horario] - [Ubicación]\"\nAclaraciones: \"📋 Necesito confirmar: [preguntas específicas]\"",
+          "maxIterations": 7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1936,
+        -16
+      ],
+      "id": "92f79fb2-9864-400e-9366-c08ef80c41c1",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Lee la disponibilidad del calendario para el rango de fechas ya configurado en esta herramienta. No requiere ni acepta parámetros adicionales.",
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "acf58f5dd1379c39022038a05ae795c8369b30544c47d42174e354de07512a7d@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "AI Automation"
+        },
+        "timeMax": "={{ $now.plus(1, 'week') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2272,
+        288
+      ],
+      "id": "bbe1de34-5f29-451c-a6d5-5135d9908954",
+      "name": "Get availability in a calendar in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "hdhcL8DSsAfLY4VF",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "marveld.dg@gmail.com",
+        "subject": "Coordinador de Agendas - Ejecución",
+        "message": "=Ejecución completada.\nCliente: {{ $json.client }}\nTipo: {{ $json.type }}\nHorario: {{ $json.scheduled_time }}\nEstado: {{ $json.status }}\n--\nMuchas gracias",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2784,
+        -256
+      ],
+      "id": "a629c70c-de8e-4fdf-b9d1-8ffa67cb5c80",
+      "name": "Send a message",
+      "webhookId": "917b1aeb-3466-4fd2-b75c-9b92c51abd76",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "46iVJidF3b1UJRwM",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        240
+      ],
+      "id": "a294b701-f05c-4080-923f-7f5567d65366",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "PGFc0l3B2zetWxsQ",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5432ea40-e93e-4c36-a5b4-106a61e71ef6",
+              "name": "cliente",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "0e8f5203-7a56-4045-b94b-52546c3e2ac7",
+              "name": "horario_solicitado",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "e90d2776-8e8e-4631-8961-bb6516c968e8",
+              "name": "tipo_reunion",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "7740fdb2-972f-4050-a8bf-99b491cf9d5b",
+              "name": "duracion",
+              "value": "={{ $json.output }}",
+              "type": "number"
+            },
+            {
+              "id": "7b05b9fc-bc6b-42bf-8738-d516be47af2b",
+              "name": "ubicacion",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "b228f8eb-410c-4a20-ad63-82da7d6d4ea4",
+              "name": "cliente_email",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2528,
+        -240
+      ],
+      "id": "95b87f7c-acf6-41be-bb6f-b134dae604dc",
+      "name": "Edit Fields",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appbX9FE6V7vWnYX2",
+          "mode": "list",
+          "cachedResultName": "Memoria_Coordinador_Agendas",
+          "cachedResultUrl": "https://airtable.com/appbX9FE6V7vWnYX2"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsZ9lyP3MMIWV8d",
+          "mode": "list",
+          "cachedResultName": "Memoria_Sesiones",
+          "cachedResultUrl": "https://airtable.com/appbX9FE6V7vWnYX2/tblsZ9lyP3MMIWV8d"
+        },
+        "filterByFormula": "={Session_ID} = \"{{ $json.sessionId }}\"",
+        "returnAll": false,
+        "limit": 1,
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "Fecha_Actualizacion",
+              "direction": "desc"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "70068130-e3f0-45a9-a58c-777d608b67ce",
+      "name": "Search records",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ATrUIMbu1dBlceWu",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a89c68b9-b391-4710-86f0-894a6436b7f7",
+              "leftValue": "={{ $json.fields.Resumen_Consolidado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "bc1b6267-c892-4323-8ef3-b10490552acc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b41d7b03-78bb-4c47-be57-596d65608301",
+              "name": "chatInput",
+              "value": "={{ $('When chat message received').item.json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        160
+      ],
+      "id": "57d454dc-74d1-447c-add2-b0168bf79535",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d0c31f71-f715-466b-a39e-131552fb1f0d",
+              "name": "chatInput",
+              "value": "={{ $('When chat message received').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "4e306027-9090-4bc9-97c7-a3597a5f981c",
+              "name": "contexto_previo",
+              "value": "=[INICIO DE CONTEXTO COMPARTIDO]\n{{ $json.fields.Resumen_Consolidado }}\nEstado del caso: {{ $json.fields.Estado_del_Caso }}\n[FIN DEL CONTEXTO COMPARTIDO]",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        -160
+      ],
+      "id": "951a0971-06ea-45b4-b98a-5f0715619eb5",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b8e95d6c-1f98-42a2-880c-2e42ec710e6e",
+              "name": "intercambios_actualizados",
+              "value": "={{ ($('Search records').item.json.fields.Cantidad_Intercambios || 0) + 1 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2528,
+        -512
+      ],
+      "id": "94c8be8d-2303-4ae2-a036-7af53850aba6",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1b49c75a-2aa1-494a-a1a5-c6ca0ffc95a6",
+              "leftValue": "={{ $json.intercambios_actualizados }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2784,
+        -512
+      ],
+      "id": "d4491919-4cb0-4931-9af1-7a35af0cae77",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appbX9FE6V7vWnYX2",
+          "mode": "list",
+          "cachedResultName": "Memoria_Coordinador_Agendas",
+          "cachedResultUrl": "https://airtable.com/appbX9FE6V7vWnYX2"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsZ9lyP3MMIWV8d",
+          "mode": "list",
+          "cachedResultName": "Memoria_Sesiones",
+          "cachedResultUrl": "https://airtable.com/appbX9FE6V7vWnYX2/tblsZ9lyP3MMIWV8d"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Session_ID": "={{ $('When chat message received').item.json.sessionId }}",
+            "Cantidad_Intercambios": "={{ $json.intercambios_actualizados }}",
+            "Fecha_Actualizacion": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "Session_ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Session_ID",
+              "displayName": "Session_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Resumen_Consolidado",
+              "displayName": "Resumen_Consolidado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado_del_Caso",
+              "displayName": "Estado_del_Caso",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Datos_Clave",
+              "displayName": "Datos_Clave",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha_Actualizacion",
+              "displayName": "Fecha_Actualizacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cantidad_Intercambios",
+              "displayName": "Cantidad_Intercambios",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3072,
+        -256
+      ],
+      "id": "9f62d18c-7480-4d24-9c76-edd43dae5fef",
+      "name": "Create or update a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ATrUIMbu1dBlceWu",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Resumí la siguiente conversación en formato JSON, con estas claves exactas: asunto_principal, puntos_clave, accion_requerida.\nNo agregues texto fuera del JSON.\n\nÚltima respuesta del agente (incluye contexto de la conversación):\n{{ $('AI Agent').item.json.output }}\n\nÚltimo mensaje del usuario:\n{{ $('When chat message received').item.json.chatInput }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3072,
+        -656
+      ],
+      "id": "50f5bc17-68be-44bf-8788-8a8b04ab6a59",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        3072,
+        -464
+      ],
+      "id": "f6cc31a4-73a1-434b-935e-4aefc78a0e6b",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "PGFc0l3B2zetWxsQ",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appbX9FE6V7vWnYX2",
+          "mode": "list",
+          "cachedResultName": "Memoria_Coordinador_Agendas",
+          "cachedResultUrl": "https://airtable.com/appbX9FE6V7vWnYX2"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsZ9lyP3MMIWV8d",
+          "mode": "list",
+          "cachedResultName": "Memoria_Sesiones",
+          "cachedResultUrl": "https://airtable.com/appbX9FE6V7vWnYX2/tblsZ9lyP3MMIWV8d"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Session_ID": "={{ $('When chat message received').item.json.sessionId }}",
+            "Resumen_Consolidado": "={{ String(JSON.parse($json.text).puntos_clave) }}",
+            "Fecha_Actualizacion": "={{ $now }}",
+            "Estado_del_Caso": "={{ String(JSON.parse($json.text).accion_requerida) }}",
+            "Cantidad_Intercambios": 0
+          },
+          "matchingColumns": [
+            "Session_ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Session_ID",
+              "displayName": "Session_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Resumen_Consolidado",
+              "displayName": "Resumen_Consolidado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado_del_Caso",
+              "displayName": "Estado_del_Caso",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Datos_Clave",
+              "displayName": "Datos_Clave",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha_Actualizacion",
+              "displayName": "Fecha_Actualizacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cantidad_Intercambios",
+              "displayName": "Cantidad_Intercambios",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3424,
+        -656
+      ],
+      "id": "3acaf88c-7077-4c16-90fb-9a0cfebbb547",
+      "name": "Create or update a record1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ATrUIMbu1dBlceWu",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        2096,
+        288
+      ],
+      "id": "f2191d94-675a-47c1-8400-2d1d15e19199",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BPW5TLL1W",
+          "mode": "id"
+        },
+        "text": "{{ $json.slackMessage }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        2784,
+        32
+      ],
+      "id": "ce7605d3-6fa5-4d22-8cc4-22a297d5735e",
+      "name": "Send a message1",
+      "webhookId": "4ed23a48-bbad-4337-94be-58bc4ed1cd6b",
+      "credentials": {
+        "slackApi": {
+          "id": "G80yJhaTWRa9gOOw",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        144,
+        656
+      ],
+      "id": "410191c6-12c6-4a46-b6cf-65464373fadf",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "46iVJidF3b1UJRwM",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5ba82d87-4401-4a89-a7b4-b00244c0e9f8",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Auto-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "967590c6-fa3d-4927-80af-4257eaec8d46",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Out of office",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "cfe5255f-ab50-475a-80f3-5b8ef2db63b1",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Undeliverable",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "7fe0e970-fc56-4809-ad00-38988384eee7",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "e695800f-aa7d-4fd0-8f27-f2189af27459",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        656
+      ],
+      "id": "5e12a16c-c0fe-43e4-b672-928097c849ef",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"email\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.From.match(/<(.+)>/) ? $json.From.match(/<(.+)>/)[1] : $json.From }}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        560
+      ],
+      "id": "b4291b4d-bb2a-44ad-8e5d-1b41a9ec2305",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1c7ogePN3BqU7qCH",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "af091fc4-f8b2-4985-9b97-81001799a95d",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        560
+      ],
+      "id": "8e3386cd-ef82-4c01-a625-ef88b128b420",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"email\": \"{{ $('If2').item.json.From.match(/<(.+)>/) ? $('If2').item.json.From.match(/<(.+)>/)[1] : $('If2').item.json.From }}\",\n    \"firstname\": \"{{ $('If2').item.json.From.split('<')[0].trim() }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1024,
+        432
+      ],
+      "id": "a0a6f82d-09ad-4eea-9d0e-117368616831",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1c7ogePN3BqU7qCH",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1280,
+        560
+      ],
+      "id": "a30dde30-029d-4058-9bed-538579142837",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edc79e07-dc1c-4584-854d-bad470cec8af",
+              "name": "chatInput",
+              "value": "={{ $('Gmail Trigger').item.json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "840d7d59-fe12-4ce7-8e8b-eaee88f3f951",
+              "name": "sessionId",
+              "value": "={{ $('Gmail Trigger').item.json.threadId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        560
+      ],
+      "id": "4481abbd-4460-45f8-9381-e50260a6492d",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{ $('If2').item.json.Subject }}",
+        "message": "={{ $json.output }}",
+        "options": {
+          "sendTo": "={{ $('If2').item.json.From }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2528,
+        272
+      ],
+      "id": "fe3b81c7-bae6-4d45-843d-bd102cbe064d",
+      "name": "Create a draft",
+      "webhookId": "acd3d969-08c1-4f25-a6cb-c8a6b65fe077",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "46iVJidF3b1UJRwM",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cc283a86-9aef-4b0f-af5d-690886e3a964",
+              "name": "slackMessage",
+              "value": "={{ 'Nuevo mail procesado. Asunto: ' + $('If2').item.json.Subject + '. Hay un borrador esperando revisión.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2528,
+        32
+      ],
+      "id": "9be3a860-12eb-4ae7-90db-47bd053d299d",
+      "name": "Edit Fields5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create or update a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Create or update a record1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0111d5c6-58a3-4eff-9b61-a9ea18190015",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4854dc7ade341adb13a29b5ac6e7fdf1b6bae4a2ff30a735c7a8d1e500a180b8"
+  },
+  "nodeGroups": [],
+  "id": "NspHwvzoxXwXxL2c",
+  "tags": []
+}
