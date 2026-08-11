@@ -312,7 +312,8 @@
         -512
       ],
       "id": "94c8be8d-2303-4ae2-a036-7af53850aba6",
-      "name": "Edit Fields3"
+      "name": "Edit Fields3",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -342,7 +343,7 @@
       "typeVersion": 2.3,
       "position": [
         2784,
-        -512
+        -528
       ],
       "id": "d4491919-4cb0-4931-9af1-7a35af0cae77",
       "name": "If1"
@@ -685,7 +686,7 @@
           "value": "C0BPW5TLL1W",
           "mode": "id"
         },
-        "text": "{{ $json.slackMessage }}",
+        "text": "={{ $json.slackMessage }}",
         "otherOptions": {}
       },
       "type": "n8n-nodes-base.slack",
@@ -1262,7 +1263,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "0111d5c6-58a3-4eff-9b61-a9ea18190015",
+  "versionId": "574f733c-6b1e-49fc-a349-1ee759d521f0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4854dc7ade341adb13a29b5ac6e7fdf1b6bae4a2ff30a735c7a8d1e500a180b8"
